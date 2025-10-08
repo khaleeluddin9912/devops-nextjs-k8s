@@ -1,40 +1,148 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Next.js App Kubernetes Deployment
 
-## Getting Started
+This repository contains a **Next.js application** containerized with Docker, built using **GitHub Actions**, pushed to **GitHub Container Registry (GHCR)**, and deployed on a **Kubernetes cluster** using Minikube.
 
-First, run the development server:
+---
 
-```bash
+## Project Overview
+
+This project demonstrates the full **DevOps workflow**:
+
+1. Build a Next.js application.
+2. Containerize it with Docker.
+3. Automate Docker build & push to GHCR using GitHub Actions.
+4. Deploy the app on Kubernetes using Minikube-ready manifests.
+
+---
+
+## Step 1 – Run Next.js Locally
+
+Clone the repository:
+
+
+git clone https://github.com/khaleeluddin9912/devops-nextjs-k8s.git
+cd my-next-app
+Install dependencies:
+
+bash
+Copy code
+npm install
+Run the app locally:
+
+bash
+Copy code
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+The app will be available at: http://localhost:3000
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+## Step 2 – Docker Build and Run
+Build Docker image:
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+bash
+Copy code
+docker build -t nextjs-app .
+Run Docker container:
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+bash
+Copy code
+docker run -p 3000:3000 nextjs-app
+The app is now running in a container on port 3000.
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Step 3 – GitHub Actions Workflow
+The workflow automatically:
 
-To learn more about Next.js, take a look at the following resources:
+Builds the Docker image.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+Pushes it to GitHub Container Registry (GHCR).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Workflow file: .github/workflows/docker-build.yml
 
-## Deploy on Vercel
+Docker image pushed to: ghcr.io/khaleeluddin9912/nextjs-app:latest
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+## Step 4 – Kubernetes Deployment
+Deployment Manifest (k8s/deployment.yaml)
+yaml
+Copy code
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextjs-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nextjs-app
+  template:
+    metadata:
+      labels:
+        app: nextjs-app
+    spec:
+      containers:
+      - name: nextjs
+        image: ghcr.io/khaleeluddin9912/nextjs-app:latest
+        ports:
+        - containerPort: 3000
+Service Manifest (k8s/service.yaml)
+yaml
+Copy code
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextjs-service
+spec:
+  type: NodePort
+  selector:
+    app: nextjs-app
+  ports:
+  - port: 3000
+    targetPort: 3000
+    nodePort: 30080
+
+---
+
+## Step 5 – Deploy on Minikube
+Start Minikube:
+
+bash
+Copy code
+minikube start
+Apply Kubernetes manifests:
+
+bash
+Copy code
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+Verify pods and service:
+
+bash
+Copy code
+kubectl get pods
+kubectl get svc
+Access the app:
+
+bash
+Copy code
+minikube service nextjs-service
+The Next.js app should be running successfully on Kubernetes with 2 replicas.
+
+Conclusion
+This project demonstrates a complete DevOps workflow:
+
+Next.js development
+
+Docker containerization
+
+CI/CD using GitHub Actions
+
+Deployment on Kubernetes (Minikube)
+
+The application is production-ready and follows modern DevOps practices.
+
+yaml
+Copy code
+
